@@ -1,6 +1,7 @@
 #include "../include/model.hpp"
 #include "../include/stats.hpp"
 #include "../include/utils.hpp"
+#include "../include/connectedSets.hpp"
 
 #include <array>
 #include <vector>
@@ -176,6 +177,49 @@ void update_glauber(std::mt19937_64 & engine, std::uniform_real_distribution<>& 
 		if(tpTable[delta] > dist(engine)) {
 			lattice[y*L + x] = newState;
 			current_energy -= (delta - neighbour_sites);
+		}
+	}
+}
+
+void update_swendsen_wang(std::mt19937_64& engine, std::uniform_real_distribution<>& dist, std::vector<u8>& lattice, size_t const L, size_t const N, double const T, int& current_energy, ConnectedSets& sets)
+{
+	sets.clear();
+	double const DL = static_cast<double>(L);
+	size_t const L1 = L - 1;
+	std::uniform_real_distribution<> fdist(0., 1.);
+	double pFlip = 1 - exp(-2. / T);
+	for (size_t y = 0; y < L; ++y) {
+		for (size_t x = 0; x < L; ++x) {
+			const std::array<size_t, 2> indices = { wrap_minus(y, L1) * L + x,
+													y * L + wrap_minus(x, L1) };
+			const size_t i_c = y * L + x;
+			const u8 w_i = lattice[i_c];
+
+			bool noAdj = true;
+			for (size_t neighbour : indices)
+			{
+				// Not every particle in connected set will be part of virtual cluster
+				if (w_i == lattice[neighbour] && fdist(engine) < pFlip)
+				{
+					sets.connect(i_c, neighbour);
+					noAdj = false;
+				}
+			}
+			// Didn't connect to anything so make sure it gets added to graph
+			if (noAdj)
+				sets.add(i_c);
+		}
+	}
+	sets.squash();
+
+	std::uniform_int_distribution<> newStateDist(0, numStates - 1);
+
+	// Consider each virtual cluster once, and flip to random new state (potentially same as prev)
+	for (auto& set : sets.sets) {
+		const u8 newState = static_cast<u8>(newStateDist(engine));
+
+		for (const int idx : set) {
+			lattice[idx] = newState;
 		}
 	}
 }

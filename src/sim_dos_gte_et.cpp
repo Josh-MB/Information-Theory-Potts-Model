@@ -4,6 +4,7 @@
 #include "../include/wanglandau.hpp"
 #include "../include/version.hpp"
 #include "../include/utils.hpp"
+#include "../include/connectedSets.hpp"
 
 #include <clara.hpp>
 #include <fmt/format.h>
@@ -34,10 +35,11 @@
 */
 int sim_dos_gte_et(int argc, char* argv[])
 {
-	size_t L = 32, U = 1000, seed = 0;
+	size_t L = 32, U = 1000, S = 1000, seed = 0;
 	int runID = 0, reps = 1;
 	double petThreshold = 0.0001, T = 1.0;
 	std::string outputDir = "", dosFile = "";
+	bool useSwendsenWang = false;
 
 	{
 		using namespace clara::detail;
@@ -45,12 +47,14 @@ int sim_dos_gte_et(int argc, char* argv[])
 		auto cli = Help(showHelp)
 			| Opt(outputDir, "directory")["--out-dir"]("Output directory")
 			| Opt(L, "lattice")["-L"]["--lattice-size"]("Width and height of lattice")
+			| Opt(S, "timesteps")["-S"]["--skip-steps"]("Number of skip steps")
 			| Opt(U, "timesteps")["-U"]["--update-steps"]("Number of update steps")
 			| Opt(seed, "seed")["--seed"]("Random seed (0 for unpredictable)")
 			| Opt(runID, "ID")["--run-ID"]("ID used for labelling files")
-			| Opt(dosFile, "filename")["--DoS-file"]("Output file containing density of states data")
+			| Opt(dosFile, "filename")["--DoS-file"]("Input file containing density of states data")
 			| Opt(T, "temperature")["-T"]["--temperature"]("Temperature value")
 			| Opt(reps, "repetitions")["--reps"]("Ensemble repetitions")
+			| Opt(useSwendsenWang)["--swendsen-wang"]("Use Swendsen-Wang updating for skip steps")
 			| Opt(petThreshold, "threshold")["--Pet-threshold"]("Minimum threshold for P(E,T) values");
 		auto result = cli.parse(Args(argc, argv));
 		if (!result) {
@@ -119,6 +123,8 @@ int sim_dos_gte_et(int argc, char* argv[])
 
 	auto usedSeed = seed ? seed : std::random_device()();
 	std::mt19937_64 rand_engine(usedSeed);
+	
+	ConnectedSets sets(useSwendsenWang ? N : 0);
 
 	std::uniform_real_distribution<> rng(0, 1);
 	for(int rep = 0; rep < reps; ++rep) {
@@ -129,6 +135,14 @@ int sim_dos_gte_et(int argc, char* argv[])
 		int current_energy = calc_action(lattice, L);
 		int prev_energy = 0;
 		auto tpTable = tp_table_init(T, 'a');
+		for (auto s = 0; s < S; ++s) {
+			if (useSwendsenWang) {
+				update_swendsen_wang(rand_engine, rng, lattice, L, N, T, current_energy, sets);
+			}
+			else {
+				update_glauber(rand_engine, rng, lattice, L, N, tpTable, current_energy);
+			}
+		}
 		for(auto u = 0; u < U; ++u) {
 			lattice_buffer = lattice;
 			prev_energy = current_energy;

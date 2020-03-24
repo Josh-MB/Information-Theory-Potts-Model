@@ -3,6 +3,7 @@
 #include <random>
 #include "defs.hpp"
 #include "wanglandau.hpp"
+#include "connectedSets.hpp"
 
 void perfect_unordered_init(std::mt19937_64 &engine, std::vector<u8> &lattice, size_t const L);
 void initialise(std::mt19937_64 &engine, std::vector<u8> &lattice, size_t const L, int const imode, double prop = 1.0);
@@ -23,6 +24,16 @@ void update_glauber(std::mt19937_64 &engine,
 					std::vector<double> const& tpTable, // Transition probabilities
 					int &current_energy
 );
+
+void update_swendsen_wang(std::mt19937_64& engine,
+	std::uniform_real_distribution<>& dist,
+	std::vector<u8>& lattice,
+	size_t const L,
+	size_t const N,
+	double const T,
+	int& current_energy,
+	ConnectedSets& sets);
+
 void update_glauber_and_record(std::mt19937_64 & engine, std::uniform_real_distribution<>& dist, std::vector<u8>& lattice, size_t const L, size_t const N, std::vector<double> const& tpTable, int &current_energy, FILE* fp);
 
 void update_glauber_and_gte_hist(std::mt19937_64 & engine,
