@@ -6,7 +6,7 @@
 
 void read_dos_file(char const*const dosFile, std::vector<double>& g, std::vector<int>& e, size_t &L)
 {
-	FILE* fp = fopen(dosFile, "r");
+	FILE* fp = fopen(dosFile, "rb");
 	if(fp == nullptr) PEEXIT("Failed to open dos file %s", dosFile);
 
 	if(check_magic_header(fp)) {
@@ -58,7 +58,7 @@ void read_dos_file(char const*const dosFile, std::vector<double>& g, std::vector
 DoSFile read_dos_file(char const* const dosFile, std::mt19937_64* rand_engine)
 {
 	DoSFile ret;
-	FILE* binFile = fopen(dosFile, "r");
+	FILE* binFile = fopen(dosFile, "rb");
 	if (binFile == nullptr) PEEXIT("Failed to open previous DoS File: %s", dosFile);
 
 	if (!check_magic_header(binFile)) PEEXIT("Bad magic");

@@ -175,7 +175,7 @@ int sim_kl_filtered_gte(int argc, char* argv[])
 	std::transform(avg_energy.begin(), avg_energy.end(), avg_energy.begin(), [U, samples](double e) {return e / (U*samples); });
 
 	std::string nameBuffer = fmt::format("glauberkl_{:0.3}-{:0.3}_{:04}.bin", Tmin, Tmax, runID);
-	FILE* binFile = fopen(nameBuffer.c_str(), "w");
+	FILE* binFile = fopen(nameBuffer.c_str(), "wb");
 	if(binFile == nullptr) PEEXIT("Failed to open binary file");
 
 	magic_header(binFile, "potts stats");

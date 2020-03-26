@@ -78,7 +78,7 @@ int sim_dos(int argc, char* argv[])
 		update_wang_landau(rand_engine, rng, lattice, wl, current_energy, L, N);
 		if(wl.update()) {
 			std::string nameBuffer = fmt::format("DoS_q{:d}_L{}_it{}_{:04d}.bin", numStates, L, wl.getIteration(), runID);
-			FILE* binFile = fopen(nameBuffer.c_str(), "w");
+			FILE* binFile = fopen(nameBuffer.c_str(), "wb");
 			if(binFile == nullptr) PEEXIT("Failed to open binary file");
 
 			magic_header(binFile, "potts dos");

@@ -55,7 +55,7 @@ int sim_record_data(int argc, char* argv[])
 	std::uniform_real_distribution<> rng(0, 1);
 
 	std::string nameBuffer = fmt::format("{}/record_data_q{}_L{}_T{:0.3}_{:04}.bin", outputDir, numStates, L, T, runID);
-	FILE* binFile = fopen(nameBuffer.c_str(), "w");
+	FILE* binFile = fopen(nameBuffer.c_str(), "wb");
 	if(binFile == nullptr) PEEXIT("Failed to open binary file");
 
 	magic_header(binFile, "potts record");

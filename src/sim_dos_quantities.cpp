@@ -164,7 +164,7 @@ int sim_dos_quantities(int argc, char* argv[])
 		std::transform(counts.begin(), counts.end(), countsTotal.begin(), countsTotal.begin(), std::plus<size_t>());
 	}
 	std::string miNameBuffer = fmt::format("{}/mi_hists_L{}_q{}_{:04}.bin", outputDir, L, numStates, runID);
-	FILE* miFile = fopen(miNameBuffer.c_str(), "w");
+	FILE* miFile = fopen(miNameBuffer.c_str(), "wb");
 	if(miFile == nullptr) PEEXIT("Failed to open mi file");
 	std::vector<double> mi_values(E1, 0.);
 	for(size_t i = 0, n = mi_hists.size(); i < n; ++i) {
@@ -190,7 +190,7 @@ int sim_dos_quantities(int argc, char* argv[])
 	}*/
 
 	std::string nameBuffer = fmt::format("{}/dos_quantities_L{}_q{}_{:04}.bin", outputDir, L, numStates, runID);
-	FILE* binFile = fopen(nameBuffer.c_str(), "w");
+	FILE* binFile = fopen(nameBuffer.c_str(), "wb");
 	if(binFile == nullptr) PEEXIT("Failed to open binary file");
 
 	magic_header(binFile, "potts dos_quantities");

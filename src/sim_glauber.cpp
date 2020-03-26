@@ -263,7 +263,7 @@ int sim_glauber(int argc, char* argv[])
 	}
 
 	std::string nameBuffer = fmt::format("{}/glauber_{:0.3}-{:0.3}_{:04}.bin", outputDir, Tmin, Tmax, runID);
-	FILE* binFile = fopen(nameBuffer.c_str(), "w");
+	FILE* binFile = fopen(nameBuffer.c_str(), "wb");
 	if(binFile == nullptr) PEEXIT("Failed to open binary file");
 
 	magic_header(binFile, "potts stats");

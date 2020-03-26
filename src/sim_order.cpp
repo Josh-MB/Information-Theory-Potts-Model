@@ -89,7 +89,7 @@ int sim_order(int argc, char* argv[])
 	double avg_magnetisation = total_magnetisation / numElements;
 
 	std::string nameBuffer = fmt::format("{}/gteorder_L{}_q{}_T{:.5}_{:04}.bin", outputDir, L, numStates, T, runID);
-	FILE* binFile = fopen(nameBuffer.c_str(), "w");
+	FILE* binFile = fopen(nameBuffer.c_str(), "wb");
 	if(binFile == nullptr) PEEXIT("Failed to open binary file");
 
 	magic_header(binFile, "potts order");
