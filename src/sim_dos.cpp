@@ -111,18 +111,12 @@ int sim_dos(int argc, char* argv[])
 			size_t sz = fullSz - numZeroes;
 
 			BIN_WRITE(sz, size_t, 1, binFile);
-			for(size_t i = 0u; i < fullSz; ++i) {
-				if(finalHist[i] != 0)
-					BIN_WRITE(logG[i], double, 1, binFile);
-			}
-			for(size_t i = 0u; i < fullSz; ++i) {
-				if(finalHist[i] != 0)
-					BIN_WRITE(finalHist[i], size_t, 1, binFile);
-			}
+			BIN_WRITE_PTR(&(logG[0]), double, logG.size(), binFile);
+			BIN_WRITE_PTR(&(finalHist[0]), size_t, finalHist.size(), binFile);
+			
 			for(size_t i = 0u; i < fullSz; ++i) {
 				size_t j = i * 2;
-				if(finalHist[i] != 0)
-					BIN_WRITE(j, size_t, 1, binFile);
+				BIN_WRITE(j, size_t, 1, binFile);
 			}
 
 			BIN_WRITE_PTR(&(lattice[0]), u8, lattice.size(), binFile);

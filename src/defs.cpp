@@ -31,9 +31,12 @@ void read_dos_file(char const*const dosFile, std::vector<double>& g, std::vector
 		BIN_READ(n, u8, 1, fp);
 		printf("DoS file is using q=%d, L=%zu\n", n, L1);
 		L = L1;
-		BIN_READ(tnum, int, 1, fp);
-		BIN_READ(tmin, double, 1, fp);
-		BIN_READ(tmax, double, 1, fp);
+		if (fileVer < 3)
+		{
+			BIN_READ(tnum, int, 1, fp);
+			BIN_READ(tmin, double, 1, fp);
+			BIN_READ(tmax, double, 1, fp);
+		}
 		if(fileVer > 1) {
 			BIN_READ(factor, double, 1, fp);
 			BIN_READ(it, size_t, 1, fp);
