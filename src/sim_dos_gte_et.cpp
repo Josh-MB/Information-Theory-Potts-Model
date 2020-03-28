@@ -102,18 +102,21 @@ int sim_dos_gte_et(int argc, char* argv[])
 	std::vector<double> pet(g.size());
 	double maxVal = 0;
 	for(int i = 0, len = static_cast<int>(g.size()); i < len; ++i) {
-		pet[i] = g[i] - static_cast<double>(e[i]) / T;
+		if (g[i] < 0)
+			pet[i] = 0;
+		else
+			pet[i] = g[i] - static_cast<double>(e[i]) / T;
 		maxVal = std::max(maxVal, pet[i]);
 	}
 	for(auto &v : pet) {
 		v = std::exp(v - maxVal);
 	}
-	pet.reserve(pet.size() + 4);
+	/*pet.reserve(pet.size() + 4);
 	//Fill in missing e values
 	pet.insert(pet.end() - 2, 0);
 	pet.insert(pet.end() - 1, 0);
 	pet.insert(pet.end() - 1, 0);
-	pet.insert(pet.end() - 1, 0);
+	pet.insert(pet.end() - 1, 0);*/
 	fmt::print("pet size: {}\n", pet.size());
 
 	std::vector<bool> petMask(pet.size(), 0);
@@ -224,7 +227,7 @@ int sim_dos_gte_et(int argc, char* argv[])
 			magnetisation[i] /= mag_count[i];
 	}
 
-	std::string nameBuffer = fmt::format("{}/dosgteet_L{}_q{}_T{:.5}_{:04}.bin", outputDir, L, numStates, T, runID);
+	std::string nameBuffer = fmt::format("{}/dosgteet_L{:d}_q{:d}_T{:.5f}_{:04d}.bin", outputDir, L, numStates, T, runID);
 	FILE* binFile = fopen(nameBuffer.c_str(), "wb");
 	if(binFile == nullptr) PEEXIT("Failed to open binary file");
 

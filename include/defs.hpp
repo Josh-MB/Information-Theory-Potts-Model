@@ -7,7 +7,7 @@
 #include <iostream>
 #include <numeric>
 
-using u8 = char;
+using u8 = uint8_t;
 
 //Set to 5 since we are only using the 5-state model
 u8 constexpr numStates = 5;
