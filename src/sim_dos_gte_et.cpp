@@ -74,19 +74,6 @@ int sim_dos_gte_et(int argc, char* argv[])
 	std::vector<u8> lattice(N);
 	std::vector<u8> lattice_buffer(N); // Used for accumulating G/TE hists
 
-	//size_t const numE1 = 2 * L*L + 1;// 2 * 32 * 32 + 1;
-	size_t const numE1 = 2 * 32 * 32 + 1;
-	std::vector<Hist> gte_hists(numE1, Hist(numStates*numStates*numSiteEnergy, 0));
-	Hist gte_counts(numE1, 0);
-	std::vector<Hist> mi_hists(numE1, Hist(numStates*numStates, 0));
-	Hist mi_counts(numE1, 0);
-	std::vector<double> magnetisation(numE1, 0.);
-	Hist mag_count(numE1, 0);
-	std::vector<Hist> gte_binary_hists(numE1, Hist(numStates*numStates*16, 0));
-	Hist gte_binary_counts(numE1, 0);
-	std::vector<Hist> gte_hists_sweep(numE1, Hist(numStates*numStates*numSiteEnergy, 0));
-	Hist gte_counts_sweep(numE1, 0);
-
 	double invN = 1.0 / static_cast<double>(N);
 	fmt::print("N={}, invN={}\n", N, invN);
 	//size_t const numE = 2 * N + 1;
@@ -111,6 +98,19 @@ int sim_dos_gte_et(int argc, char* argv[])
 	for(auto &v : pet) {
 		v = std::exp(v - maxVal);
 	}
+
+	size_t const numE1 = 2 * dosL * dosL + 1;// 2 * 32 * 32 + 1;
+	std::vector<Hist> gte_hists(numE1, Hist(numStates * numStates * numSiteEnergy, 0));
+	Hist gte_counts(numE1, 0);
+	std::vector<Hist> mi_hists(numE1, Hist(numStates * numStates, 0));
+	Hist mi_counts(numE1, 0);
+	std::vector<double> magnetisation(numE1, 0.);
+	Hist mag_count(numE1, 0);
+	std::vector<Hist> gte_binary_hists(numE1, Hist(numStates * numStates * 16, 0));
+	Hist gte_binary_counts(numE1, 0);
+	std::vector<Hist> gte_hists_sweep(numE1, Hist(numStates * numStates * numSiteEnergy, 0));
+	Hist gte_counts_sweep(numE1, 0);
+
 	/*pet.reserve(pet.size() + 4);
 	//Fill in missing e values
 	pet.insert(pet.end() - 2, 0);
