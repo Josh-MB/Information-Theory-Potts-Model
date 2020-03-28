@@ -48,6 +48,11 @@ void read_dos_file(char const*const dosFile, std::vector<double>& g, std::vector
 		printf("allocing finalHist\n");
 		size_t* finalHist = new size_t[sz];
 		BIN_READ_PTR(finalHist, size_t, sz, fp);
+		for (size_t i = 0; i < sz; ++i)
+		{
+			if (finalHist[i] == 0)
+				g[i] = -1;
+		}
 		delete[] finalHist;
 		Hist e1(sz, 0);
 		BIN_READ_PTR(&(e1[0]), size_t, sz, fp);

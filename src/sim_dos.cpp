@@ -110,7 +110,7 @@ int sim_dos(int argc, char* argv[])
 			auto fullSz = logG.size();
 			size_t sz = fullSz - numZeroes;
 
-			BIN_WRITE(sz, size_t, 1, binFile);
+			BIN_WRITE(fullSz, size_t, 1, binFile);
 			BIN_WRITE_PTR(&(logG[0]), double, logG.size(), binFile);
 			BIN_WRITE_PTR(&(finalHist[0]), size_t, finalHist.size(), binFile);
 			
