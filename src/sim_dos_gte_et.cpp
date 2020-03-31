@@ -146,6 +146,8 @@ int sim_dos_gte_et(int argc, char* argv[])
 				update_glauber(rand_engine, rng, lattice, L, N, tpTable, current_energy);
 			}
 		}
+		if (useSwendsenWang)
+			current_energy = calc_action(lattice, L);
 		for(auto u = 0; u < U; ++u) {
 			lattice_buffer = lattice;
 			prev_energy = current_energy;

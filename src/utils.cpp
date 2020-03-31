@@ -84,12 +84,12 @@ bool check_magic_header(FILE * fp)
 
 void progrep(const char* const msg, const size_t u, const size_t U)
 {
-	if ((u + 1) % (U / 10) == 0) fmt::print("{} : {}% complete\n", msg, 10 * (u + 1) / std::max(1ull, (U / 10))); // report progress of iterative sim from 10% - 100%
+	if ((u + 1) % std::max(1ull, (U / 10) == 0) fmt::print("{} : {}% complete\n", msg, 10 * (u + 1) / std::max(1ull, (U / 10))); // report progress of iterative sim from 10% - 100%
 }
 
 void progrep(FILE * fp, const char* const msg, const size_t u, const size_t U)
 {
-	if ((u + 1) % (U / 10) == 0) fmt::print(fp, "{} : {}% complete\n", msg, 10 * (u + 1) / std::max(1ull, (U / 10))); // report progress of iterative sim from 10% - 100%
+	if ((u + 1) % std::max(1ull, (U / 10) == 0) fmt::print(fp, "{} : {}% complete\n", msg, 10 * (u + 1) / std::max(1ull, (U / 10))); // report progress of iterative sim from 10% - 100%
 }
 
 void print_debug_info()
