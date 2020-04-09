@@ -26,6 +26,8 @@ if dosFileVer > 1
     [params.iteration,c] = fread(fid,1,'uint64'); assert(c==1);
 end
 [params.gSize, c] = fread(fid, 1, 'uint64'); assert(c==1);
+% Temp adjustment
+% params.gSize = params.gSize + 4
 
 % Log of DoS
 [logg, c] = fread(fid, params.gSize, 'double'); assert(c==params.gSize);

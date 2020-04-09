@@ -42,6 +42,7 @@ void read_dos_file(char const*const dosFile, std::vector<double>& g, std::vector
 			BIN_READ(it, size_t, 1, fp);
 		}
 		BIN_READ(sz, size_t, 1, fp);
+		// sz += 4;
 		g.resize(sz);
 		e.resize(sz);
 		BIN_READ_PTR(&(g[0]), double, sz, fp);
@@ -117,6 +118,7 @@ DoSFile read_dos_file(char const* const dosFile, std::mt19937_64* rand_engine)
 	BIN_READ_PTR(ret.indices.data(), size_t, sz, binFile);
 	BIN_READ_PTR(ret.lattice.data(), u8, L2, binFile);
 
+	// Probably need to fix this too
 	for (size_t j = 0; j < fullSz; ++j)
 	{
 		if (ret.indices[j] != -1) {
