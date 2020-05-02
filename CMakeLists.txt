@@ -191,7 +191,7 @@ target_include_directories(Catch INTERFACE
   "${CMAKE_CURRENT_SOURCE_DIR}/external/catch2")
 
 add_library(test-main OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/unit_tests/main.cpp)
-target_link_libraries(test-main Catch)
+target_include_directories(test-main PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/external/catch2")
 
 add_executable(potts-entropy-test
   $<TARGET_OBJECTS:objfiles> # Object files from main executable
