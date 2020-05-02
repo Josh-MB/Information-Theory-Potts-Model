@@ -42,7 +42,8 @@ void read_dos_file(char const*const dosFile, std::vector<double>& g, std::vector
 			BIN_READ(it, size_t, 1, fp);
 		}
 		BIN_READ(sz, size_t, 1, fp);
-		// sz += 4;
+        if(fileVer == 3)
+            sz += 4;
 		g.resize(sz);
 		e.resize(sz);
 		BIN_READ_PTR(&(g[0]), double, sz, fp);
@@ -92,6 +93,14 @@ DoSFile read_dos_file(char const* const dosFile, std::mt19937_64* rand_engine)
 		delete[] buf1;
 	}
 	BIN_READ(ret.numStates, u8, 1, binFile);
+    if (ret.fileVersion < 3)
+    {
+        int iIgnore;
+        double dIgnore;
+        BIN_READ(iIgnore, int, 1, fp); // tnum
+        BIN_READ(dIgnore, double, 1, fp); // tmin
+        BIN_READ(dIgnore, double, 1, fp); // tmax
+    }
 	if (ret.fileVersion > 1) {
 		BIN_READ(ret.factor, double, 1, binFile);
 		BIN_READ(ret.iteration, size_t, 1, binFile);

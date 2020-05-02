@@ -111,12 +111,14 @@ int sim_dos_gte_et(int argc, char* argv[])
 	std::vector<Hist> gte_hists_sweep(numE1, Hist(numStates * numStates * numSiteEnergy, 0));
 	Hist gte_counts_sweep(numE1, 0);
 
-	/*pet.reserve(pet.size() + 4);
-	//Fill in missing e values
-	pet.insert(pet.end() - 2, 0);
-	pet.insert(pet.end() - 1, 0);
-	pet.insert(pet.end() - 1, 0);
-	pet.insert(pet.end() - 1, 0);*/
+    if(CURRENT_DOS_FILE_VER < 4) {
+        pet.reserve(pet.size() + 4);
+        //Fill in missing e values
+        pet.insert(pet.end() - 2, 0);
+        pet.insert(pet.end() - 1, 0);
+        pet.insert(pet.end() - 1, 0);
+        pet.insert(pet.end() - 1, 0);
+    }
 	fmt::print("pet size: {}\n", pet.size());
 
 	std::vector<bool> petMask(pet.size(), 0);
