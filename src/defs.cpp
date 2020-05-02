@@ -97,9 +97,9 @@ DoSFile read_dos_file(char const* const dosFile, std::mt19937_64* rand_engine)
     {
         int iIgnore;
         double dIgnore;
-        BIN_READ(iIgnore, int, 1, fp); // tnum
-        BIN_READ(dIgnore, double, 1, fp); // tmin
-        BIN_READ(dIgnore, double, 1, fp); // tmax
+        BIN_READ(iIgnore, int, 1, binFile); // tnum
+        BIN_READ(dIgnore, double, 1, binFile); // tmin
+        BIN_READ(dIgnore, double, 1, binFile); // tmax
     }
 	if (ret.fileVersion > 1) {
 		BIN_READ(ret.factor, double, 1, binFile);
