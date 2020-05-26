@@ -10,6 +10,7 @@
 
 int sim_anim(int argc, char* argv[]);
 int sim_glauber(int argc, char* argv[]);
+int sim_glauber_xy(int argc, char* argv[]);
 int sim_kl_filtered_gte(int argc, char* argv[]);
 int sim_dos(int argc, char* argv[]);
 int sim_dos_gte_et(int argc, char* argv[]);
@@ -32,6 +33,7 @@ int main(int argc, char* argv[])
 			"anim - Perform visualisation\n"
 			"glauber - Calculate metrics using Glauber updating\n"
 			"glauber_kl - As with 'glauber', but filtering GTE histogram based on KL divergence\n"
+			"glauber_xy - Simulate XY model, using Tomita+Swendsen-Wang method\n"
 			"dos - Calculate the Density of State\n"
 			"dos_gte - Calculate GTE(E,T) from DoS to derive GTE from in matlab\n"
 			"thermodynamic_quantities - Calculate thermodynamic MI, magnetisation and interface lengths from DoS\n"
@@ -54,6 +56,7 @@ int main(int argc, char* argv[])
 		if (command == "anim") retCode = sim_anim(argc_1, argv_1);
 		else if (command == "glauber") retCode = sim_glauber(argc_1, argv_1);
 		else if (command == "glauber_kl") retCode = sim_kl_filtered_gte(argc_1, argv_1);
+		else if (command == "glauber_xy") retCode = sim_glauber_xy(argc_1, argv_1);
 		else if (command == "dos") retCode = sim_dos(argc_1, argv_1);
 		else if (command == "dos_gte") retCode = sim_dos_gte_et(argc_1, argv_1);
 		else if (command == "order") retCode = sim_order(argc_1, argv_1);

@@ -184,7 +184,6 @@ void update_glauber(std::mt19937_64 & engine, std::uniform_real_distribution<>& 
 void update_swendsen_wang(std::mt19937_64& engine, std::uniform_real_distribution<>& dist, std::vector<u8>& lattice, size_t const L, size_t const N, double const T, int& current_energy, ConnectedSets& sets)
 {
 	sets.clear();
-	double const DL = static_cast<double>(L);
 	size_t const L1 = L - 1;
 	std::uniform_real_distribution<> fdist(0., 1.);
 	double pFlip = 1 - exp(-2. / T);
@@ -221,6 +220,165 @@ void update_swendsen_wang(std::mt19937_64& engine, std::uniform_real_distributio
 		for (const int idx : set) {
 			lattice[idx] = newState;
 		}
+	}
+}
+
+double calc_energy_xy(std::vector<double>& lattice, std::vector<XY_site>& latticeVectors, std::vector<double>& siteEnergy, const size_t L)
+{
+	double total_energy = 0;
+	size_t const N=L*L;
+	size_t const L1 = L-1;
+	latticeVectors.reserve(N);
+	latticeVectors.clear();
+	for (size_t i = 0; i < N; ++i) {
+		latticeVectors.emplace_back(cos(lattice[i]), sin(lattice[i]));
+	}
+	
+	for (size_t y = 0; y < L; ++y) {
+		for (size_t x = 0; x < L; ++x) {
+			const size_t i = y*L+x;
+			std::array<size_t, 4> neighbours{ wrap_minus(y, L1)*L + x, wrap_plus(y, L1)*L + x, y*L + wrap_minus(x, L1), y*L + wrap_plus(x, L1) };
+			const double energy = -std::accumulate(neighbours.begin(), neighbours.end(), 0., [&latticeVectors, i](double sum, u8 n) { return sum + dot(latticeVectors[i], latticeVectors[n]); });
+			siteEnergy[i] = energy;
+			total_energy += energy;			
+		}
+	}
+	return total_energy;
+}
+
+double calc_site_energy_xy(std::vector<double>& lattice, std::vector<XY_site>& latticeVectors, XY_site const newState, size_t const x, size_t const y, const size_t L)
+{
+	size_t const L1 = L - 1;
+	std::array<size_t, 4> neighbours{ wrap_minus(y, L1)*L + x, wrap_plus(y, L1)*L + x, y*L + wrap_minus(x, L1), y*L + wrap_plus(x, L1) };
+	return -std::accumulate(neighbours.begin(), neighbours.end(), 0., [&latticeVectors, &newState](double sum, u8 n) { return sum + dot(newState, latticeVectors[n]); });
+}
+
+void update_glauber_xy(std::mt19937_64 & engine, std::uniform_real_distribution<>& dist,
+			       std::vector<double>& swlattice,
+				   std::vector<XY_site>& latticeVectors,
+			       std::vector<double> &swSiteEnergy,
+			       const double T, size_t const L, size_t const N, double &current_energy)
+{
+	double const DLsq = static_cast<double>(L*L);
+	std::uniform_real_distribution<double> newStateDist(-PI, PI);
+	
+	const auto glauberFactor = [](const double delta, const double T) { return 1.0 / (1.0 + exp(delta / T)); };
+	
+	for(size_t n = 0; n < N; ++n) {
+		size_t y = static_cast<size_t>(dist(engine)*DLsq);
+		size_t x = y % L; // Single use of RNG
+		y /= L;
+		
+		const double newState = (newStateDist(engine));
+		
+		XY_site newStateVector = XY_site(cos(newState), sin(newState));
+		
+		auto new_energy = calc_site_energy_xy(swlattice, latticeVectors, newStateVector, x, y, L);
+		auto delta = new_energy - swSiteEnergy[y*L + x];
+		
+		// I don't think we can use a table with xy model because spins are real.
+		if(glauberFactor(delta,T) > dist(engine)) {
+			swlattice[y*L + x] = newState;
+			latticeVectors[y*L + x] = newStateVector;
+			swSiteEnergy[y*L + x] = new_energy;
+			current_energy -= delta;
+		}
+	}
+}
+
+void update_swendsen_wang_xy(std::mt19937_64& engine, std::uniform_real_distribution<>& dist, std::vector<u8>& lattice, size_t const L, size_t const N, double const T, ConnectedSets& sets, const std::vector<double>& J)
+{
+	sets.clear();
+	size_t const L1 = L - 1;
+	std::uniform_real_distribution<> fdist(0., 1.);
+	std::vector<double> pFlip(2*N);
+	for (int i = 0; i < 2*N; ++i) {
+		pFlip[i] = 1 - exp(-2. * J[i] / T);
+	}
+	
+	for (size_t y = 0; y < L; ++y) {
+		for (size_t x = 0; x < L; ++x) {
+			const std::array<size_t, 2> indices = { wrap_minus(y, L1) * L + x,
+													y * L + wrap_minus(x, L1) };
+			const size_t i_c = y * L + x;
+			const u8 w_i = lattice[i_c];
+
+			bool noAdj = true;
+			for (size_t i_n = 0; i_n < indices.size(); ++i_n)
+			{
+				// Not every particle in connected set will be part of virtual cluster
+				if (w_i == lattice[indices[i_n]] && fdist(engine) < pFlip[i_c * 2 + i_n])
+				{
+					sets.connect(i_c, indices[i_n]);
+					noAdj = false;
+				}
+			}
+			// Didn't connect to anything so make sure it gets added to graph
+			if (noAdj)
+				sets.add(i_c);
+		}
+	}
+	sets.squash();
+
+	std::uniform_int_distribution<> newStateDist(0, numStates - 1);
+
+	// Consider each virtual cluster once, and flip to random new state (potentially same as prev)
+	for (auto& set : sets.sets) {
+		const u8 newState = static_cast<u8>(newStateDist(engine));
+
+		for (const int idx : set) {
+			lattice[idx] = newState;
+		}
+	}
+}
+
+void update_tomita(std::mt19937_64& engine, std::uniform_real_distribution<>& unit_dist, std::vector<double>& lattice, size_t const L, size_t const N, double const T, ConnectedSets& sets)
+{
+	std::uniform_real_distribution<double> pi_dist(-PI,PI);
+    double const phi = pi_dist(engine);
+	size_t const L1 = L - 1;
+	
+	// Coupling strengths for each Ising deconstruction
+	std::vector<double> J1(2*N), J2(2*N);
+	// Ising deconstructions
+	std::vector<u8> S1(N), S2(N);
+	// Angle deltas
+	std::vector<double> c(N), s(N);
+	
+	// Precalculate all of the sin/cos values
+	for (size_t i = 0; i < N; ++i) {
+		c[i] = cos(lattice[i] - phi);
+		s[i] = sin(lattice[i] - phi);
+	}
+	
+	for (size_t y = 0; y < L; ++y) {
+		for (size_t x = 0; x < L; ++x) {
+			const std::array<size_t, 2> indices = { wrap_minus(y, L1) * L + x,
+													y * L + wrap_minus(x, L1) };
+			const size_t i_c = y * L + x;
+			
+			double const cx = c[i_c];
+			double const sx = s[i_c];
+			
+			// Construct the Ising lattices
+			S1[i_c] = copysign(1, cx);
+			S2[i_c] = copysign(1, sx);
+			
+			// Get coupling strengths for up/right neighbours
+			for (size_t i_n = 0; i_n < indices.size(); ++i_n) {
+				J1[i_c * 2 + i_n] = abs(cx) * abs(c[indices[i_n]]);
+				J2[i_c * 2 + i_n] = abs(sx) * abs(s[indices[i_n]]);
+			}
+		}
+	}
+	
+	// SW update each of the Ising lattices
+	update_swendsen_wang_xy(engine, unit_dist, S1, L, N, T, sets, J1);
+	update_swendsen_wang_xy(engine, unit_dist, S2, L, N, T, sets, J2);
+	
+	// Recombine the Ising lattices
+	for (int i = 0; i < N; ++i) {
+		lattice[i] = atan2(S1[i]*c[i], S2[i]*s[i]);
 	}
 }
 

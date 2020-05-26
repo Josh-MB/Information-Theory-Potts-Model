@@ -80,3 +80,28 @@ double calc_order(std::vector<u8> const & lattice, size_t const L);
 double calculate_autocorrelation(std::vector<double> const& magnetisation, int dt, double mag_mean, double mag_var);
 double calculate_relaxation_time(std::vector<double> const& magnetisation);
 
+struct XY_site
+{
+	double cosTheta;
+	double sinTheta;
+	XY_site(double c, double s) : cosTheta(c), sinTheta(s) {};
+private:
+	friend double dot(const XY_site& lhs, const XY_site& rhs) {
+		return lhs.cosTheta * rhs.cosTheta + lhs.sinTheta * rhs.sinTheta;
+	}
+};
+
+// XY model update that uses Swendsen-Wang updating
+double calc_energy_xy(std::vector<double>& lattice, std::vector<XY_site>& latticeVectors, std::vector<double>& siteEnergy, const size_t L);
+
+double calc_site_energy_xy(std::vector<double>& lattice, std::vector<XY_site>& latticeVectors, XY_site const newState, size_t const x, size_t const y, const size_t L);
+
+void update_glauber_xy(std::mt19937_64 & engine, std::uniform_real_distribution<>& dist,
+			       std::vector<double>& swlattice,
+				   std::vector<XY_site>& latticeVectors,
+			       std::vector<double> &swSiteEnergy,
+			       const double T, size_t const L, size_t const N, double &current_energy);
+
+void update_swendsen_wang_xy(std::mt19937_64& engine, std::uniform_real_distribution<>& dist, std::vector<u8>& lattice, size_t const L, size_t const N, double const T, ConnectedSets& sets, const std::vector<double>& J);
+
+void update_tomita(std::mt19937_64& engine, std::uniform_real_distribution<>& unit_dist, std::vector<double>& lattice, size_t const L, size_t const N, double const T, ConnectedSets& sets);

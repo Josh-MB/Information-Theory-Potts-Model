@@ -19,6 +19,10 @@ int constexpr numNeighbourhoods = 9; // Used for aggregating neighbours in GTE r
 int constexpr numSiteEnergy = 5; // Number of possible energy values for a given site (-4, -3, -2, -1, 0)
 constexpr int neighbour_sites = 4;
 
+constexpr double PI = (double)3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348L;
+constexpr double TWOPI = (double)6.2831853071795864769252867665590057683943387987502116419498891846156328125724179972560696L;
+constexpr double ITWOPI = (double)0.1591549430918953357688837633725143620344596457404564487476673440588967976342265350901138L;
+
 using Hist = std::vector<size_t>;
 
 //Helper macros for wrapping lattice coordinates
@@ -60,6 +64,22 @@ inline int unwrap(int const x, int const L) {
 		return 1;
 	else
 		return x;
+}
+
+inline double awrap(const double h) // return angle wrapped to [-pi,pi)
+{
+	return h-TWOPI*floor(ITWOPI*h+0.5);
+}
+
+inline double rwrap(const double x, const double L) // return coord wrapped to range [-L/2, L/2)
+{
+	return x - L*floor((x / L) + 0.5);
+}
+
+inline double dwrap(const double d, const double L) // return distance in [0,L) wrapped to [0,L/2]
+{
+	const double dw = fabs(d);
+	return dw < L/2 ? dw : L-dw;
 }
 
 //Helpers for write data to binary file
