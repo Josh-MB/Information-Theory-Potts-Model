@@ -85,6 +85,7 @@ int sim_glauber_xy(int argc, char* argv[])
 	size_t L = 32, U = 1000, S = 1000, seed = 0;
 	int runID = 0, threadLimit = 1, Tnum = 60, estimatorNeighbours = 3;
 	double Tmin = 0.001, Tmax = 1.7;
+	bool calcMI = false, calcTE = false, calcGTE = false;
 	std::string outputDir = "", TvalsFromFile = "";
 
 	{
@@ -102,6 +103,9 @@ int sim_glauber_xy(int argc, char* argv[])
 			| Opt(Tnum, "count")["--T-count"]("How many temperature values to use")
 			| Opt(Tmin, "temperature")["--T-min"]("Minimum temperature bound")
 			| Opt(Tmax, "temperature")["--T-max"]("Maximum temperature bound")
+			| Opt(calcMI)["--mi"]("Calculates MI metric")
+			| Opt(calcTE)["--te"]("Calculates TE metric")
+			| Opt(calcGTE)["--gte"]("Calculates GTE metric")
 			| Opt(TvalsFromFile, "filename")["--T-values"]("File to read temperature values from. Takes precedence over Tnum/Tmin/Tmax");
 		auto result = cli.parse(Args(argc, argv));
 		if (!result) {
@@ -125,10 +129,18 @@ int sim_glauber_xy(int argc, char* argv[])
 	fmt::print("{:<12} = {:<24}\n", "--T-count", Tnum);
 	fmt::print("{:<12} = {:<24}\n", "--T-min", Tmin);
 	fmt::print("{:<12} = {:<24}\n", "--T-max", Tmax);
+	fmt::print("{:<12} = {:<24}\n", "--mi", calcMI);
+	fmt::print("{:<12} = {:<24}\n", "--te", calcTE);
+	fmt::print("{:<12} = {:<24}\n", "--gte", calcGTE);
 	fmt::print("{:<12} = {:<24}\n", "--T-values", TvalsFromFile);
 
 	print_debug_info();
 
+	if (! (calcMI || calcTE || calcGTE)) {
+		fmt::print("One of --mi, --te or --gte must be present\n");
+		return EXIT_FAILURE;
+	}
+		
 	int num_threads = set_num_threads(threadLimit);
 	
 	size_t const N = L*L;
@@ -178,9 +190,12 @@ int sim_glauber_xy(int argc, char* argv[])
 	
 	fmt::print("Initialised. Running simulations now\n");
 		
-	DataSet<2> dataForMI(N*U*2, estimatorNeighbours);
-	DataSet<3> dataForTE(N*(U-1)*4, estimatorNeighbours);
-	DataSet<6> dataForGTE(N*(U-1), estimatorNeighbours);
+	const int miN = calcMI ? N*U*2 : 0;
+	const int teN = calcTE ? N*(U-1)*4 : 0;
+	const int gteN = calcGTE ? N*(U-1) : 0;
+	DataSet<2> dataForMI(miN, estimatorNeighbours);
+	DataSet<3> dataForTE(teN, estimatorNeighbours);
+	DataSet<6> dataForGTE(gteN, estimatorNeighbours);
 	
 	constexpr int Xdim = 0;
 	constexpr int Ydim = 1;
@@ -233,25 +248,25 @@ int sim_glauber_xy(int argc, char* argv[])
 					
 					std::array<size_t, 2> mi_neighbours{ wrap_minus(y, L1)*L + x, y*L + wrap_minus(x, L1)};
 					
-					for (const size_t n : mi_neighbours) {
-						dataForMI.setData(awrap(latticeDegeneracyBroken[idx]), jMI, Xdim);
-						dataForMI.setData(awrap(latticeDegeneracyBroken[n]), jMI, Ydim);
-						++jMI;
-					}
-					
-					for (const size_t n : neighbours) {
-						//dataForMI.setData(awrap(latticeDegeneracyBroken[idx]), jMI, Xdim);
-						//dataForMI.setData(awrap(latticeDegeneracyBroken[n]), jMI, Ydim);
-						//++jMI;
-						
-						if (u > 0) {
-							dataForTE.setData(awrap(previousLatticeDegeneracyBroken[idx]), jTE, Xdim);
-							dataForTE.setData(awrap(previousLatticeDegeneracyBroken[n]), jTE, Ydim);
-							dataForTE.setData(awrap(latticeDegeneracyBroken[idx]), jTE, WdimTE);
-							++jTE;
+					if (calcMI) {
+						for (const size_t n : mi_neighbours) {
+							dataForMI.setData(awrap(latticeDegeneracyBroken[idx]), jMI, Xdim);
+							dataForMI.setData(awrap(latticeDegeneracyBroken[n]), jMI, Ydim);
+							++jMI;
 						}
 					}
-					if (u > 0) {
+					
+					if (calcTE) {
+						for (const size_t n : neighbours) {
+							if (u > 0) {
+								dataForTE.setData(awrap(previousLatticeDegeneracyBroken[idx]), jTE, Xdim);
+								dataForTE.setData(awrap(previousLatticeDegeneracyBroken[n]), jTE, Ydim);
+								dataForTE.setData(awrap(latticeDegeneracyBroken[idx]), jTE, WdimTE);
+								++jTE;
+							}
+						}
+					}
+					if (calcGTE && u > 0) {
 						dataForGTE.setData(awrap(previousLatticeDegeneracyBroken[idx]), jGTE, Xdim);
 						dataForGTE.setData(awrap(latticeDegeneracyBroken[idx]), jGTE, WdimGTE);
 						for (int n = 0; n < neighbours.size(); ++n)
@@ -269,7 +284,7 @@ int sim_glauber_xy(int argc, char* argv[])
 		draw_lattice(gpipe, L, lattice);
 		draw_mi_xy(gpipe, PI + 1.0, dataForMI);
 		finish_frame_xy(gpipe);*/
-		{
+		if (calcMI)	{
 			fmt::print("Calculating MI\n");
 			dataForMI.calcBallsizes();
 			
@@ -279,7 +294,7 @@ int sim_glauber_xy(int argc, char* argv[])
 			MI[Ti] = psi(dataForMI.getK()) + psi(dataForMI.getN()) - psiNX - psiNY;
 			fmt::print("Done MI={} for T={}\n", MI[Ti], T_vals[Ti]);
 		}
-		{
+		if (calcTE)	{
 			fmt::print("Calculating TE\n");
 			dataForTE.calcBallsizes();
 			
@@ -290,7 +305,7 @@ int sim_glauber_xy(int argc, char* argv[])
 			TE[Ti] = psi(dataForTE.getK()) - psiNXW - psiNXY + psiNX;
 			fmt::print("Done TE={} for T={}\n", TE[Ti], T_vals[Ti]);
 		}
-		{
+		if (calcGTE) {
 			fmt::print("Calculating GTE\n");
 			dataForGTE.calcBallsizes();
 
