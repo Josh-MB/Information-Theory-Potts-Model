@@ -26,6 +26,7 @@ int sim_glauber(int argc, char* argv[])
 	char pottsVersion = 'a';
 	std::string outputDir = "", TvalsFromFile = "";
 	bool sortQStates = false, doRecordInterfaceLengths = false;
+	bool useSwendsenWang = false;
 
 	{
 		using namespace clara::detail;
@@ -46,6 +47,7 @@ int sim_glauber(int argc, char* argv[])
 			| Opt(pottsVersion, "type")["--potts-version"]("Potts version to use. Use b for Ising")
 			| Opt(regime, "mode")["--heatbath-regime"]("Temperature regime. 0 - independent, 1 - warming, 2 - cooling")
 			| Opt(orderedProportion, "threshold")["--low-T-ordered-prop"]("Proportion of lattice sites that are initialised to q=0 below T_c, if --init-mode=3")
+			| Opt(useSwendsenWang)["--swendsen-wang"]("Use Swendsen-Wang updating for skip steps")
 			| Opt(sortQStates)["--sort-Q-states"]("Sorts states. Intended to overcome repetitions collapsing to different ground states")
 			| Opt(TvalsFromFile, "filename")["--T-values"]("File to read temperature values from. Takes precedence over Tnum/Tmin/Tmax")
 			| Opt(doRecordInterfaceLengths)["--interface-length"]("Calculate and record interface lengths");
@@ -75,6 +77,7 @@ int sim_glauber(int argc, char* argv[])
 	fmt::print("{:<12} = {:<24}\n", "--potts-version", pottsVersion);
 	fmt::print("{:<12} = {:<24}\n", "--heatbath-regime", regime);
 	fmt::print("{:<12} = {:<24}\n", "--low-T-ordered-prop", orderedProportion);
+	fmt::print("{:<12} = {:<24}\n", "--swendsen-wang", useSwendsenWang);
 	fmt::print("{:<12} = {:<24}\n", "--sort-Q-states", sortQStates);
 	fmt::print("{:<12} = {:<24}\n", "--T-values", TvalsFromFile);
 	fmt::print("{:<12} = {:<24}\n", "--interface-length", doRecordInterfaceLengths);
@@ -198,11 +201,21 @@ int sim_glauber(int argc, char* argv[])
 				initialise(rand_engine, context.lattice, L, init, orderedProportion);
 			}
 
+			ConnectedSets sets(useSwendsenWang ? N : 0);
+
 			// Run skip steps
 			int current_energy = calc_action(context.lattice, L);
 			for(size_t s = 0; s < S; ++s) {
-				update_glauber(rand_engine, rng, context.lattice, L, N, tpTable, current_energy);
+				if (useSwendsenWang) {
+					update_swendsen_wang(rand_engine, rng, context.lattice, L, N, 			T_vals[Ti], current_energy, sets);
+				}
+				else {
+					update_glauber(rand_engine, rng, context.lattice, L, N, tpTable, current_energy);
+				}
 			}
+			
+			if (useSwendsenWang)
+				current_energy = calc_action(context.lattice, L);
 
 			// Run update steps
 			for(size_t u = 0; u < U; ++u) {
