@@ -154,7 +154,8 @@ int sim_dos_gte_et(int argc, char* argv[])
 			lattice_buffer = lattice;
 			prev_energy = current_energy;
 			update_glauber_and_gte_hist(rand_engine, rng, lattice, L, N, tpTable, current_energy, petMask, gte_hists, gte_counts, mi_hists, mi_counts, magnetisation, mag_count, gte_binary_hists, gte_binary_counts, (dosL != L));
-			GTE_reduced_histogram(lattice, lattice_buffer, L, gte_hists_sweep[scaleEnergyValue(prev_energy, L)]);
+			auto energyToUse = (dosL != L) ? scaleEnergyValue(prev_energy, L) : prev_energy;
+			GTE_reduced_histogram(lattice, lattice_buffer, L, gte_hists_sweep[energyToUse]);
 			if(u == U - 1) {
 				int test_energy = calc_action(lattice, L);
 				if(test_energy != current_energy) {
